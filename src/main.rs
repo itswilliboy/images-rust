@@ -78,9 +78,9 @@ async fn get(mut db: Connection<DB>, filename: &str) -> Result<BufferResponse, S
     match resp {
         Ok(Some(row)) => {
             let buffer: Vec<u8> = row.try_get("image_data").unwrap();
-            let content_type: String = row.try_get("mimetype").unwrap_or("image/png".to_string());
+            let content_type: &str = row.try_get("mimetype").unwrap_or("image/png");
 
-            Ok(BufferResponse(buffer, content_type))
+            Ok(BufferResponse(buffer, content_type.into()))
         }
         _ => Err(Status::NotFound),
     }
