@@ -5,10 +5,8 @@ extern crate rocket;
 use nanoid::nanoid;
 use rocket::form::Form;
 use rocket::fs::{NamedFile, TempFile};
-use rocket::http::Header;
-use rocket::http::{ContentType, Status};
-use rocket::request::FromRequest;
-use rocket::request::Outcome;
+use rocket::http::{ContentType, Status, Header};
+use rocket::request::{FromRequest, Outcome};
 use rocket::response::Responder;
 use rocket::{Request, Response};
 use rocket_db_pools::sqlx::{self, Row};
@@ -44,9 +42,9 @@ impl<'r> FromRequest<'r> for Authorization {
     type Error = AuthorizationError;
 
     async fn from_request(
-        req: &'r rocket::Request<'_>,
+        request: &'r rocket::Request<'_>,
     ) -> rocket::request::Outcome<Self, Self::Error> {
-        match req.headers().get_one("Authorization") {
+        match request.headers().get_one("Authorization") {
             Some(key) if key == AUTH_KEY => Outcome::Success(Authorization(key.to_owned())),
             Some(_) => Outcome::Failure((Status::Unauthorized, AuthorizationError::Invalid)),
             None => Outcome::Failure((Status::Unauthorized, AuthorizationError::Missing)),
