@@ -59,7 +59,7 @@ struct DB(sqlx::PgPool);
 
 #[get("/")]
 fn index() -> &'static str {
-    "Hello, World!"
+    "Hello, World! (now with Rust)"
 }
 
 #[get("/favicon.ico")]
@@ -133,7 +133,7 @@ async fn upload(
                 (
                     ContentType::JSON,
                     format!(
-                        "{{\"id\": \"{}\", \"url\": \"https://i.itswilliboy.com/{}.{}\"}}",
+                        r#"{{"id": "{}", "url": "https://i.itswilliboy.com/{}.{}"}}"#,
                         id, id, ext
                     )
                     .to_owned(),
