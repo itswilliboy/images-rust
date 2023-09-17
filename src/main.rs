@@ -43,8 +43,8 @@ impl<'r> FromRequest<'r> for Authorization {
     type Error = AuthorizationError;
 
     async fn from_request(
-        request: &'r rocket::Request<'_>,
-    ) -> rocket::request::Outcome<Self, Self::Error> {
+        request: &'r Request<'_>,
+    ) -> Outcome<Self, Self::Error> {
         match request.headers().get_one("Authorization") {
             Some(key) if key == AUTH_KEY => Outcome::Success(Authorization(key.to_owned())),
             Some(_) => Outcome::Failure((Status::Unauthorized, AuthorizationError::Invalid)),
