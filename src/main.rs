@@ -5,7 +5,7 @@ extern crate rocket;
 use nanoid::nanoid;
 use rocket::form::Form;
 use rocket::fs::{NamedFile, TempFile};
-use rocket::http::{ContentType, Status, Header};
+use rocket::http::{ContentType, Header, Status};
 use rocket::request::{FromRequest, Outcome};
 use rocket::response::Responder;
 use rocket::{Request, Response};
@@ -27,6 +27,7 @@ impl<'r> Responder<'r, 'static> for BufferResponse {
         Ok(response)
     }
 }
+
 struct Authorization(String);
 
 #[derive(Debug)]
