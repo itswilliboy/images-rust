@@ -1,3 +1,4 @@
 /target
 Rocket.toml
 Cargo.lock
+.cargo

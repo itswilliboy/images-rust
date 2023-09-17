@@ -37,6 +37,8 @@ enum AuthorizationError {
     Invalid,
 }
 
+static AUTH_KEY: &str = env!("AUTH_KEY");
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Authorization {
     type Error = AuthorizationError;
@@ -45,7 +47,7 @@ impl<'r> FromRequest<'r> for Authorization {
         req: &'r rocket::Request<'_>,
     ) -> rocket::request::Outcome<Self, Self::Error> {
         match req.headers().get_one("Authorization") {
-            Some(key) if key == "beans" => Outcome::Success(Authorization(key.to_owned())),
+            Some(key) if key == AUTH_KEY => Outcome::Success(Authorization(key.to_owned())),
             Some(_) => Outcome::Failure((Status::Unauthorized, AuthorizationError::Invalid)),
             None => Outcome::Failure((Status::Unauthorized, AuthorizationError::Missing)),
         }
