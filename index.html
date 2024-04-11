@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script> <!-- :3 -->
+    <title>Images</title>
+</head>
+<body>
+    <div class="w-screen h-screen flex justify-center bg-slate-900 text-white">
+        <div class="flex flex-col w-[400px] text-center">
+            <h1 class="mt-32 text-5xl font-semibold underline">What is this?</h1>
+            <p class="mt-4">
+                Hello! This is just a little webserver (not cdn!) that I use to store images mostly used for Discord and such.
+                <br><br>
+                The backend is currently just a little rust implementation using <a href="https://rocket.rs/" target="_blank">rocket.rs</a> available over on
+                <a href="https://github.com/itswilliboy/images-rust" target="_blank">GitHub</a>
+                if you're interested.
+                <br><br>
+                This front page is just a single HTML-file using <a href="https://tailwindcss.com/" target="_blank">TailwindCSS</a>.
+            </p>
+        </div>
+    </div>
+</body>
+<style>
+
+    a {
+        color: #3b82f6;
+    }
+
+    a:hover {
+        color: #7dd3fc;
+    }
+
+    a::after {
+        content: "";
+        background: url("assets/external.svg");
+        width: 8px;
+        height: 8px;
+
+        display: inline-block;
+        margin-left: 2px;
+
+        filter: invert();
+    }
+
+</style>
+</html>

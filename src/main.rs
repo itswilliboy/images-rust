@@ -42,9 +42,7 @@ static AUTH_KEY: &str = env!("AUTH_KEY");
 impl<'r> FromRequest<'r> for Authorization {
     type Error = AuthorizationError;
 
-    async fn from_request(
-        request: &'r Request<'_>,
-    ) -> Outcome<Self, Self::Error> {
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match request.headers().get_one("Authorization") {
             Some(key) if key == AUTH_KEY => Outcome::Success(Authorization(key.to_owned())),
             Some(_) => Outcome::Failure((Status::Unauthorized, AuthorizationError::Invalid)),
@@ -58,13 +56,18 @@ impl<'r> FromRequest<'r> for Authorization {
 struct DB(sqlx::PgPool);
 
 #[get("/")]
-fn index() -> &'static str {
-    "Hello, World! (now with Rust)"
+async fn index() -> NamedFile {
+    NamedFile::open("index.html").await.ok().unwrap()
 }
 
 #[get("/favicon.ico")]
 async fn favicon() -> NamedFile {
     NamedFile::open("favicon.ico").await.ok().unwrap()
+}
+
+#[get("/assets/external.svg")]
+async fn external() -> NamedFile {
+    NamedFile::open("./assets/external.svg").await.ok().unwrap()
 }
 
 #[get("/<filename>")]
@@ -133,7 +136,7 @@ async fn upload(
                 (
                     ContentType::JSON,
                     format!(
-                        r#"{{"id": "{}", "url": "https://i.itswilliboy.com/{}.{}"}}"#,
+                        r#"{{"id": "{}", "url": "http://localhost:8000/{}.{}"}}"#,
                         id, id, ext
                     )
                     .to_owned(),
@@ -151,5 +154,5 @@ async fn upload(
 fn rocket() -> _ {
     rocket::build()
         .attach(DB::init())
-        .mount("/", routes![index, favicon, get, upload])
+        .mount("/", routes![index, favicon, external, get, upload])
 }
