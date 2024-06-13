@@ -1,4 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro)]
 #[macro_use]
 extern crate rocket;
 
@@ -28,10 +27,10 @@ impl<'r> Responder<'r, 'static> for BufferResponse {
     }
 }
 
-struct Authorization(String);
+struct Authorization(());
 
 #[derive(Debug)]
-enum AuthorizationError {
+enum AuthorisationError {
     Missing,
     Invalid,
 }
@@ -40,13 +39,13 @@ static AUTH_KEY: &str = env!("AUTH_KEY");
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Authorization {
-    type Error = AuthorizationError;
+    type Error = AuthorisationError;
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match request.headers().get_one("Authorization") {
-            Some(key) if key == AUTH_KEY => Outcome::Success(Authorization(key.to_owned())),
-            Some(_) => Outcome::Failure((Status::Unauthorized, AuthorizationError::Invalid)),
-            None => Outcome::Failure((Status::Unauthorized, AuthorizationError::Missing)),
+            Some(key) if key == AUTH_KEY => Outcome::Success(Authorization(())),
+            Some(_) => Outcome::Failure((Status::Unauthorized, AuthorisationError::Invalid)),
+            None => Outcome::Failure((Status::Unauthorized, AuthorisationError::Missing)),
         }
     }
 }
@@ -72,7 +71,7 @@ async fn external() -> NamedFile {
 
 #[get("/<filename>")]
 async fn get(mut db: Connection<DB>, filename: &str) -> Result<BufferResponse, Status> {
-    let split: Vec<&str> = filename.split(".").collect();
+    let split: Vec<&str> = filename.split('.').collect();
     let name = split[0];
     let resp = sqlx::query("SELECT * FROM images WHERE id = $1")
         .bind(name)
@@ -91,12 +90,12 @@ async fn get(mut db: Connection<DB>, filename: &str) -> Result<BufferResponse, S
 }
 
 fn get_id() -> String {
-    let chars: [char; 52] = [
+    const CHARS: [char; 52] = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
         's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
         'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     ];
-    nanoid!(10, &chars)
+    nanoid!(10, &CHARS)
 }
 
 #[post("/upload", data = "<file>", format = "multipart/form-data")]
@@ -105,10 +104,8 @@ async fn upload(
     _auth: Authorization,
     mut file: Form<TempFile<'_>>,
 ) -> Result<(Status, (ContentType, String)), Status> {
-    let ext = {
-        let mimetype = file.content_type().unwrap();
-        mimetype.extension().unwrap().to_string()
-    };
+    let mimetype = file.content_type().ok_or(Status::BadRequest)?;
+    let ext = mimetype.extension().ok_or(Status::BadRequest)?.to_string();
 
     let id = get_id();
     let path = format!("temp/{}.{}", id, ext);
@@ -128,9 +125,7 @@ async fn upload(
 
     match resp {
         Ok(_) => {
-            match remove_file(path) {
-                _ => (),
-            };
+            let _ = remove_file(path);
             Ok((
                 Status::Ok,
                 (
