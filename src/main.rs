@@ -145,9 +145,43 @@ async fn upload(
     }
 }
 
+#[get("/<filename>/delete?<auth>")]
+async fn delete(mut db: Connection<DB>, filename: &str, auth: &str) -> Result<Status, Status> {
+    if auth != AUTH_KEY {
+        return Err(Status::Forbidden);
+    }
+
+    let split: Vec<&str> = filename.split('.').collect();
+    let name = split[0];
+    let resp = sqlx::query("SELECT EXISTS(SELECT 1 FROM images WHERE id = $1) AS does_exist")
+        .bind(name)
+        .fetch_optional(&mut *db)
+        .await;
+
+    let does_exist: bool = match resp {
+        Ok(Some(row)) => {
+            let exists: bool = row.get("does_exist");
+            exists
+        }
+        _ => false,
+    };
+
+    match does_exist {
+        true => {
+            sqlx::query("DELETE FROM images WHERE id = $1")
+                .bind(name)
+                .execute(&mut *db)
+                .await
+                .unwrap_or_else(|_| panic!("Failed to delete image with id: '{}'", name));
+            Ok(Status::Ok)
+        }
+        false => Ok(Status::ImATeapot),
+    }
+}
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
         .attach(DB::init())
-        .mount("/", routes![index, favicon, external, get, upload])
+        .mount("/", routes![index, favicon, external, get, upload, delete])
 }
